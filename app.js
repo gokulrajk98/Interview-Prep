@@ -421,8 +421,12 @@
       }
     });
     $("menu-toggle").addEventListener("click", () => $("sidebar").classList.toggle("open"));
+    $("auth-form").addEventListener("submit", handleAuthSubmit);
+    $("auth-mode-toggle").addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
+    $("sign-out").addEventListener("click", async () => { if (supabaseClient) await supabaseClient.auth.signOut(); });
   }
   load();
   bindEvents();
   renderAll();
+  bootstrapCloud();
 })();
