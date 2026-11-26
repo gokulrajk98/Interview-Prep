@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="A personal interview question manager for organizing, revising and tracking interview preparation.">
+  <title>Interview Prep Hub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="Interview Prep Hub home">
+        <span class="brand-mark">IP</span>
+        <span><strong>Interview Prep</strong><small>PERSONAL WORKSPACE</small></span>
+      </a>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-item active" data-view="dashboard"><span>▦</span> Dashboard</button>
+        <button class="nav-item" data-view="questions"><span>☷</span> All questions <b id="nav-count">0</b></button>
+        <button class="nav-item" data-view="review"><span>◷</span> Revision queue</button>
+      </nav>
+      <div class="side-label category-heading">CATEGORIES <button id="add-category" class="icon-button" title="Add category" aria-label="Add category">＋</button></div>
+      <nav id="category-nav" class="nav-list category-list" aria-label="Question categories"></nav>
+      <div class="sidebar-bottom">
+        <div class="storage-note"><span class="status-dot"></span><span><strong>Saved on this device</strong><small>Browser storage enabled</small></span></div>
+        <button class="nav-item" data-view="settings"><span>⚙</span> Backup & settings</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu icon-button" id="menu-toggle" aria-label="Toggle menu">☰</button>
+        <div class="breadcrumbs">My workspace <span>/</span> <strong id="page-label">Dashboard</strong></div>
+        <div class="top-actions">
+          <button class="button button-quiet" id="top-export">Export backup</button>
+          <button class="button button-primary" id="top-add">＋ Add question</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <div class="page-heading">
+          <div><p class="eyebrow">YOUR PREPARATION, ORGANIZED</p><h1>Good to see you.</h1><p class="subheading">Build your knowledge base. Be ready for the next interview.</p></div>
+          <button class="button button-primary large" id="dashboard-add">＋ Add a question</button>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-icon purple">☷</div><div class="stat-caption">Total questions</div><div class="stat-value" id="stat-total">0</div><div class="stat-foot">In your question bank</div></article>
+          <article class="stat-card"><div class="stat-icon amber">◷</div><div class="stat-caption">To learn</div><div class="stat-value" id="stat-learning">0</div><div class="stat-foot">Not started or learning</div></article>
+          <article class="stat-card"><div class="stat-icon green">✓</div><div class="stat-caption">Completed</div><div class="stat-value" id="stat-completed">0</div><div class="stat-foot">Ready to explain</div></article>
+          <article class="stat-card"><div class="stat-icon blue">▤</div><div class="stat-caption">Categories</div><div class="stat-value" id="stat-categories">0</div><div class="stat-foot">Areas of preparation</div></article>
+        </div>
+        <div class="dashboard-grid">
+          <section class="panel progress-panel">
+            <div class="panel-heading"><div><h2>Preparation progress</h2><p>How much of your question bank have you mastered?</p></div><span class="progress-percent" id="progress-percent">0%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-legend"><span><i class="legend-dot green-dot"></i> Completed <b id="legend-completed">0</b></span><span><i class="legend-dot amber-dot"></i> Learning <b id="legend-learning">0</b></span><span><i class="legend-dot grey-dot"></i> Not started <b id="legend-new">0</b></span></div>
+          </section>
+          <section class="panel quick-panel">
+            <div class="panel-heading"><div><h2>Quick actions</h2><p>Keep your preparation moving.</p></div></div>
+            <button class="quick-action" id="quick-add"><span class="quick-icon">＋</span><span><strong>Add a question</strong><small>Save a new interview question</small></span><span class="arrow">→</span></button>
+            <button class="quick-action" id="quick-review"><span class="quick-icon">◷</span><span><strong>Review questions</strong><small>Practise what you have saved</small></span><span class="arrow">→</span></button>
+          </section>
+        </div>
+        <section class="panel recent-panel">
+          <div class="panel-heading"><div><h2>Recently added</h2><p>Your latest additions to the question bank.</p></div><button class="text-button" data-go="questions">View all questions →</button></div>
+          <div id="recent-list" class="question-list compact-list"></div>
+          <div class="empty-state" id="recent-empty"><div class="empty-icon">✦</div><h3>Your question bank starts here</h3><p>Add your first interview question and build your personal revision library.</p><button class="button button-primary" id="empty-add">＋ Add your first question</button></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-questions">
+        <div class="page-heading compact-heading"><div><p class="eyebrow">YOUR KNOWLEDGE BASE</p><h1 id="questions-title">All questions</h1><p class="subheading">Search, filter, edit and revise your saved interview questions.</p></div><button class="button button-primary large" id="questions-add">＋ Add question</button></div>
+        <div class="toolbar panel">
+          <div class="search-wrap"><span>⌕</span><input id="search-input" type="search" placeholder="Search questions, answers, tags..." aria-label="Search questions"></div>
+          <select id="filter-status" aria-label="Filter by status"><option value="">All statuses</option><option>Not Started</option><option>Learning</option><option>Completed</option></select>
+          <select id="filter-difficulty" aria-label="Filter by difficulty"><option value="">All difficulties</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+          <select id="sort-by" aria-label="Sort questions"><option value="updated">Recently updated</option><option value="created">Recently added</option><option value="az">Question A–Z</option></select>
+        </div>
+        <div class="results-line"><span id="results-count">0 questions</span><button class="text-button" id="clear-filters">Clear filters</button></div>
+        <div id="question-list" class="question-list"></div>
+        <div class="empty-state panel hidden" id="questions-empty"><div class="empty-icon">⌕</div><h3>No questions found</h3><p>Try another search or clear your filters. You can also add a new question.</p><button class="button button-primary" id="no-results-add">＋ Add question</button></div>
+      </section>
+
+      <section class="view" id="view-review">
+        <div class="page-heading compact-heading"><div><p class="eyebrow">PRACTISE & RECALL</p><h1>Revision queue</h1><p class="subheading">Review questions you have not completed yet.</p></div></div>
+        <div class="review-summary panel"><div><span class="stat-caption">Questions to revisit</span><strong id="review-count">0</strong></div><p>Open a question, try answering it from memory, then update its preparation status.</p></div>
+        <div id="review-list" class="question-list"></div>
+        <div class="empty-state panel hidden" id="review-empty"><div class="empty-icon">✓</div><h3>You're all caught up</h3><p>There are no questions in your revision queue. Add more questions or revisit completed topics when you are ready.</p><button class="button button-primary" data-go="questions">Browse all questions</button></div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="page-heading compact-heading"><div><p class="eyebrow">YOUR DATA, YOUR CONTROL</p><h1>Backup & settings</h1><p class="subheading">Manage your browser-stored question bank and protect your work.</p></div></div>
+        <div class="settings-grid">
+          <section class="panel setting-card"><div class="setting-symbol">⇩</div><h2>Export your questions</h2><p>Download your question bank as a JSON file. Keep a backup before clearing browser data or moving to another device.</p><button class="button button-primary" id="settings-export">Download backup</button></section>
+          <section class="panel setting-card"><div class="setting-symbol">⇧</div><h2>Import a backup</h2><p>Restore questions from a previously exported JSON file. Matching question IDs are updated; other questions are added.</p><label class="button button-secondary file-button" for="import-file">Choose backup file</label><input id="import-file" type="file" accept=".json,application/json" hidden></section>
+          <section class="panel setting-card"><div class="setting-symbol">▣</div><h2>Storage information</h2><p id="storage-detail">Your questions are stored locally in this browser.</p><div class="storage-warning">Browser storage does not automatically sync between devices or browsers. Anyone using this browser profile may be able to access the data.</div></section>
+          <section class="panel setting-card danger-card"><div class="setting-symbol">!</div><h2>Delete all questions</h2><p>Permanently clear the question bank stored in this browser. Export a backup first if you may need these questions later.</p><button class="button button-danger" id="delete-all">Delete all questions</button></section>
+        </div>
+        <section class="panel about-panel"><h2>About Interview Prep Hub</h2><p>A personal interview preparation tool built with HTML, CSS and JavaScript. It does not require an account, server or database. Your question bank is saved in your browser using localStorage.</p><p class="muted small-text">Version 1.0 · Personal use</p></section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="question-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header"><div><p class="eyebrow">QUESTION BANK</p><h2 id="modal-title">Add a question</h2></div><button class="icon-button close-modal" aria-label="Close">✕</button></div>
+      <form id="question-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-field full-field"><label for="question-text">Interview question <span class="required">*</span></label><textarea id="question-text" rows="2" required maxlength="1500" placeholder="e.g. What is the difference between locator() and getByRole() in Playwright?"></textarea></div>
+        <div class="form-row">
+          <div class="form-field"><label for="question-category">Category <span class="required">*</span></label><select id="question-category" required></select></div>
+          <div class="form-field"><label for="question-difficulty">Difficulty</label><select id="question-difficulty"><option>Beginner</option><option selected>Intermediate</option><option>Advanced</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label for="question-status">Preparation status</label><select id="question-status"><option>Not Started</option><option>Learning</option><option>Completed</option></select></div>
+          <div class="form-field"><label for="question-tags">Tags</label><input id="question-tags" type="text" placeholder="locators, async, waits"></div>
+        </div>
+        <div class="form-field full-field"><label for="question-answer">Answer / explanation</label><textarea id="question-answer" rows="5" placeholder="Write the answer in your own words..."></textarea></div>
+        <div class="form-field full-field"><label for="question-example">Code example / practical scenario / notes</label><textarea id="question-example" rows="4" placeholder="Add code snippets, real project examples or follow-up points..."></textarea></div>
+        <div class="modal-footer"><button type="button" class="button button-quiet close-modal">Cancel</button><button type="submit" class="button button-primary" id="save-question">Save question</button></div>
+        <p class="form-hint">Your changes are saved in this browser when you save the question.</p>
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
