@@ -13,6 +13,11 @@
   let categories = [...DEFAULT_CATEGORIES];
   let activeCategory = "";
   let toastTimer;
+  let supabaseClient = null;
+  let currentUser = null;
+  let cloudReady = false;
+  let cloudSaveTimer = null;
+  let authMode = "signin";
 
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, char => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
@@ -28,16 +33,132 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
   }
-  function save() {
+  function saveLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
       localStorage.setItem(CATEGORY_KEY, JSON.stringify(categories));
       updateStorageInfo();
       return true;
     } catch (error) {
-      notify("Could not save. Your browser storage may be full or unavailable.");
+      notify("Could not save a local backup. Your browser storage may be unavailable.");
       return false;
     }
+  }
+  function save() {
+    if (!saveLocal()) return false;
+    if (cloudReady && currentUser && supabaseClient) {
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => saveCloud().catch(error => {
+        console.error("Cloud save failed:", error);
+        setStorageStatus("Cloud sync issue", "Local backup retained");
+        notify("Cloud sync failed. Your local backup is still saved; check your connection.");
+      }), 450);
+    }
+    return true;
+  }
+  function setStorageStatus(title, subtitle) {
+    if ($("storage-status-title")) $("storage-status-title").textContent = title;
+    if ($("storage-status-subtitle")) $("storage-status-subtitle").textContent = subtitle;
+  }
+  async function saveCloud() {
+    if (!cloudReady || !currentUser || !supabaseClient) return;
+    const payload = { questions, categories };
+    const { error } = await supabaseClient.from("user_workspaces").upsert({
+      user_id: currentUser.id, payload, updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+    if (error) throw error;
+    setStorageStatus("Cloud storage connected", "All devices synchronized");
+    updateStorageInfo();
+  }
+  async function loadCloudForUser(user) {
+    cloudReady = false;
+    currentUser = user;
+    setStorageStatus("Connecting to cloud…", user.email || "Signed in");
+    const { data, error } = await supabaseClient.from("user_workspaces")
+      .select("payload").eq("user_id", user.id).maybeSingle();
+    if (error) throw error;
+    if (data && data.payload) {
+      questions = Array.isArray(data.payload.questions) ? data.payload.questions : [];
+      const cloudCategories = Array.isArray(data.payload.categories) ? data.payload.categories : [];
+      categories = [...new Set([...DEFAULT_CATEGORIES, ...cloudCategories.filter(x => typeof x === "string")])];
+      saveLocal();
+    } else {
+      // First sign-in: migrate this browser's existing question bank into the user's private cloud row.
+      categories = [...new Set([...DEFAULT_CATEGORIES, ...categories])];
+      const { error: insertError } = await supabaseClient.from("user_workspaces").insert({
+        user_id: user.id, payload: { questions, categories }
+      });
+      if (insertError) throw insertError;
+    }
+    cloudReady = true;
+    $("auth-gate").classList.add("hidden");
+    $("app-shell").classList.remove("hidden");
+    setStorageStatus("Cloud storage connected", "Private sync · " + (user.email || "Signed in"));
+    updateStorageInfo();
+    renderAll();
+  }
+  function showAuthMessage(message, success = false) {
+    const el = $("auth-message");
+    el.textContent = message;
+    el.classList.toggle("success", success);
+  }
+  function setAuthMode(mode) {
+    authMode = mode;
+    const signup = mode === "signup";
+    $("auth-heading").textContent = signup ? "Create your private account" : "Sign in to your workspace";
+    $("auth-submit").textContent = signup ? "Create account" : "Sign in";
+    $("auth-switch-label").textContent = signup ? "Already have an account?" : "New here?";
+    $("auth-mode-toggle").textContent = signup ? "Sign in" : "Create an account";
+    $("auth-password").autocomplete = signup ? "new-password" : "current-password";
+    showAuthMessage("");
+  }
+  async function handleAuthSubmit(event) {
+    event.preventDefault();
+    if (!supabaseClient) return showAuthMessage("Cloud setup is not complete. Add your Supabase URL and anon/publishable key to config.js, then redeploy.");
+    const email = $("auth-email").value.trim();
+    const password = $("auth-password").value;
+    $("auth-submit").disabled = true;
+    showAuthMessage(authMode === "signup" ? "Creating your account…" : "Signing in…");
+    try {
+      if (authMode === "signup") {
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data.session) await loadCloudForUser(data.user);
+        else showAuthMessage("Account created. Check your email for the confirmation link, then return here and sign in.", true);
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await loadCloudForUser(data.user);
+      }
+    } catch (error) {
+      console.error(error);
+      showAuthMessage(error.message || "Authentication failed. Please try again.");
+    } finally {
+      $("auth-submit").disabled = false;
+    }
+  }
+  async function bootstrapCloud() {
+    const config = window.SUPABASE_CONFIG || {};
+    const configured = config.url && config.anonKey && !config.url.includes("YOUR_") && !config.anonKey.includes("YOUR_");
+    if (!configured || !window.supabase?.createClient) {
+      showAuthMessage("Supabase setup is not complete yet. Add your project URL and anon/publishable key to config.js, then redeploy this folder.");
+      return;
+    }
+    supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) { showAuthMessage(error.message); return; }
+    if (data.session?.user) {
+      try { await loadCloudForUser(data.session.user); }
+      catch (err) { console.error(err); showAuthMessage("Could not load your cloud workspace: " + err.message); }
+    }
+    supabaseClient.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        cloudReady = false; currentUser = null;
+        $("app-shell").classList.add("hidden");
+        $("auth-gate").classList.remove("hidden");
+        showAuthMessage("You have signed out.", true);
+      }
+    });
   }
   function load() {
     try {
@@ -53,7 +174,7 @@
   }
   function updateStorageInfo() {
     const count = questions.length;
-    const detail = `${count} question${count === 1 ? "" : "s"} and ${categories.length} categories are saved in this browser profile.`;
+    const detail = `${count} question${count === 1 ? "" : "s"} and ${categories.length} categories are saved in your private cloud workspace${currentUser ? ` for ${currentUser.email}` : ""}.`;
     if ($("storage-detail")) $("storage-detail").textContent = detail;
     if ($("nav-count")) $("nav-count").textContent = count;
   }

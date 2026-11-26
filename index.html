@@ -9,7 +9,25 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
+  <section id="auth-gate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-brand"><span class="brand-mark">IP</span><div><strong>Interview Prep Hub</strong><small>PRIVATE CLOUD WORKSPACE</small></div></div>
+      <p class="eyebrow">YOUR PERSONAL QUESTION BANK</p>
+      <h1 id="auth-heading">Sign in to your workspace</h1>
+      <p class="auth-copy">Sign in to access your interview questions from any device. Your data is private to your account.</p>
+      <form id="auth-form">
+        <label for="auth-email">Email address</label>
+        <input id="auth-email" type="email" autocomplete="email" required placeholder="you@example.com">
+        <label for="auth-password">Password</label>
+        <input id="auth-password" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters">
+        <button class="button button-primary auth-submit" id="auth-submit" type="submit">Sign in</button>
+      </form>
+      <p class="auth-switch"><span id="auth-switch-label">New here?</span> <button type="button" id="auth-mode-toggle" class="text-button">Create an account</button></p>
+      <p id="auth-message" class="auth-message" role="status"></p>
+      <p class="auth-footnote">Your questions are stored in your private cloud database, not just in this browser.</p>
+    </div>
+  </section>
+  <div class="app-shell hidden" id="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#" aria-label="Interview Prep Hub home">
         <span class="brand-mark">IP</span>
@@ -24,7 +42,7 @@
       <div class="side-label category-heading">CATEGORIES <button id="add-category" class="icon-button" title="Add category" aria-label="Add category">＋</button></div>
       <nav id="category-nav" class="nav-list category-list" aria-label="Question categories"></nav>
       <div class="sidebar-bottom">
-        <div class="storage-note"><span class="status-dot"></span><span><strong>Saved on this device</strong><small>Browser storage enabled</small></span></div>
+        <div class="storage-note"><span class="status-dot"></span><span><strong id="storage-status-title">Cloud storage connected</strong><small id="storage-status-subtitle">Private account sync</small></span></div>
         <button class="nav-item" data-view="settings"><span>⚙</span> Backup & settings</button>
       </div>
     </aside>
@@ -36,6 +54,7 @@
         <div class="top-actions">
           <button class="button button-quiet" id="top-export">Export backup</button>
           <button class="button button-primary" id="top-add">＋ Add question</button>
+          <button class="button button-quiet" id="sign-out">Sign out</button>
         </div>
       </header>
 
@@ -94,10 +113,10 @@
         <div class="settings-grid">
           <section class="panel setting-card"><div class="setting-symbol">⇩</div><h2>Export your questions</h2><p>Download your question bank as a JSON file. Keep a backup before clearing browser data or moving to another device.</p><button class="button button-primary" id="settings-export">Download backup</button></section>
           <section class="panel setting-card"><div class="setting-symbol">⇧</div><h2>Import a backup</h2><p>Restore questions from a previously exported JSON file. Matching question IDs are updated; other questions are added.</p><label class="button button-secondary file-button" for="import-file">Choose backup file</label><input id="import-file" type="file" accept=".json,application/json" hidden></section>
-          <section class="panel setting-card"><div class="setting-symbol">▣</div><h2>Storage information</h2><p id="storage-detail">Your questions are stored locally in this browser.</p><div class="storage-warning">Browser storage does not automatically sync between devices or browsers. Anyone using this browser profile may be able to access the data.</div></section>
+          <section class="panel setting-card"><div class="setting-symbol">▣</div><h2>Storage information</h2><p id="storage-detail">Your questions are securely synced to your private cloud workspace.</p><div class="storage-warning">Keep your login credentials private. Export a JSON backup periodically as an extra precaution.</div></section>
           <section class="panel setting-card danger-card"><div class="setting-symbol">!</div><h2>Delete all questions</h2><p>Permanently clear the question bank stored in this browser. Export a backup first if you may need these questions later.</p><button class="button button-danger" id="delete-all">Delete all questions</button></section>
         </div>
-        <section class="panel about-panel"><h2>About Interview Prep Hub</h2><p>A personal interview preparation tool built with HTML, CSS and JavaScript. It does not require an account, server or database. Your question bank is saved in your browser using localStorage.</p><p class="muted small-text">Version 1.0 · Personal use</p></section>
+        <section class="panel about-panel"><h2>About Interview Prep Hub</h2><p>A personal interview preparation tool built with HTML, CSS, JavaScript and Supabase. Your account keeps your question bank synchronized across your devices.</p><p class="muted small-text">Version 2.0 · Private cloud workspace</p></section>
       </section>
     </main>
   </div>
@@ -124,6 +143,8 @@
     </div>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
